@@ -1,0 +1,29 @@
+.text-cursor-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 40; /* ✅ Above Waves but below DarkMode (z-50) */
+}
+
+.text-cursor-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.text-cursor-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+  font-size: clamp(1.5rem, 2vw, 2rem); /* ✅ Responsive */
+  user-select: none;
+  white-space: nowrap;
+  color: var(--text); /* ✅ Theme compatible */
+  z-index: 40;
+}
