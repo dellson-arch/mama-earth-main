@@ -25,7 +25,7 @@ export default function Hero() {
       <div className="hidden lg:flex w-[52%] justify-end z-0">
         <div className="w-full h-[85vh] rounded-3xl overflow-hidden shadow-2xl border border-muted">
           <video
-            src="/your-video.mp4" // Replace with actual path
+            src="/hero.mp4" // Replace with actual path
             autoPlay
             muted
             loop

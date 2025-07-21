@@ -1,12 +1,11 @@
 @import "tailwindcss";
-
 @tailwind utilities;
 
 :root {
   --bg: white;
-  --text: #1f2937; 
-  --price: #34d399; /* Tailwind green-400 */
-  --cta: #10b981; 
+  --text: #1f2937;
+  --price: #34d399;
+  --cta: #10b981;
 }
 
 [data-theme='dark'] {
@@ -14,10 +13,28 @@
   --text: #f9fafb;
 }
 
-body {
+html, body {
+  margin: 0;
+  padding: 0;
   background-color: var(--bg);
   color: var(--text);
   transition: background-color 0.3s, color 0.3s;
+  height: 100%;
+  overflow-x: hidden; /* ✅ Allow vertical scrolling */
 }
 
+/* ✅ Waves stays fixed full-screen */
+.waves {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none; /* ✅ Don't block clicks */
+  z-index: 0;
+}
 
+main {
+  position: relative;
+  z-index: 10;
+}
