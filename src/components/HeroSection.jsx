@@ -1,7 +1,7 @@
 "use client"
 
-import { Button } from "../components/ui/button"
-import { Badge } from "../components/ui/badge"
+import { Button } from "./ui/Button"
+import { Badge } from "./ui/Badge"
 import { Sparkles, ArrowRight } from "lucide-react"
 
 export default function HeroSection({ setCurrentPage }) {

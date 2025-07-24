@@ -108,23 +108,45 @@ const HomePage = ({ onNavigate, addToCart, addToWishlist, wishlistItems = [] }) 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-green-900">
-        <div className="absolute inset-0 bg-hero-pattern opacity-10"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-green-900 min-h-screen flex items-center">
+        {/* Video Background */}
+        <div className="absolute inset-0 z-0">
+          <video autoPlay muted loop playsInline className="w-full h-full object-cover opacity-30">
+            <source src="/placeholder.mp4" type="video/mp4" />
+            {/* Fallback gradient background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-green-600/20 to-green-800/20" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-900/70 via-black/50 to-gray-900/70" />
+        </div>
+
+        {/* Floating Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-32 h-32 bg-green-500/20 rounded-full blur-3xl animate-float"></div>
+          <div
+            className="absolute top-40 right-20 w-48 h-48 bg-emerald-400/20 rounded-full blur-3xl animate-float"
+            style={{ animationDelay: "2s" }}
+          ></div>
+          <div
+            className="absolute bottom-20 left-1/4 w-24 h-24 bg-green-300/20 rounded-full blur-2xl animate-float"
+            style={{ animationDelay: "4s" }}
+          ></div>
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="animate-fade-in">
-              <Badge className="bg-green-600/20 text-green-400 border-green-600/30 mb-4">
-                <Sparkles className="h-3 w-3 mr-1" />
+            <div className="animate-fade-in text-center lg:text-left">
+              <Badge className="bg-green-600/20 text-green-400 border-green-600/30 mb-6 inline-flex items-center">
+                <Sparkles className="h-3 w-3 mr-2" />
                 100% Natural & Safe
               </Badge>
-              <h1 className="text-5xl lg:text-6xl font-bold text-white mb-6">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
                 Natural Beauty, <span className="gradient-text">Made Safe</span>
               </h1>
-              <p className="text-xl text-gray-300 mb-8 leading-relaxed">
+              <p className="text-lg sm:text-xl text-gray-300 mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0">
                 Discover the goodness of nature with MamaEarth's range of toxin-free, natural products for you and your
                 family.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Button onClick={() => onNavigate("analyzer")} className="btn-primary text-lg px-8 py-4">
                   <Sparkles className="h-5 w-5 mr-2" />
                   Find My Products
@@ -146,7 +168,7 @@ const HomePage = ({ onNavigate, addToCart, addToWishlist, wishlistItems = [] }) 
                   alt="Natural skincare products"
                   className="w-full h-auto rounded-2xl shadow-2xl"
                 />
-                <div className="absolute -top-4 -right-4 bg-green-600 text-white p-3 rounded-full animate-bounce-slow">
+                <div className="absolute -top-4 -right-4 bg-green-600 text-white p-3 rounded-full animate-bounce">
                   <Leaf className="h-6 w-6" />
                 </div>
               </div>

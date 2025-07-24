@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { TreePine, Award, Globe, Leaf, TrendingUp, Users, Target } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card"
 import { Badge } from "./ui/Badge"
 import { Button } from "./ui/Button"
 

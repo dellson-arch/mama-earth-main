@@ -1,11 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Heart, MessageCircle, Share2, Star, Filter, Search, Play, ThumbsUp, Eye } from "lucide-react"
+import { Heart, MessageCircle, Share2, Star, Filter, Search, Play, ThumbsUp, Eye, X } from "lucide-react"
 import { Card, CardContent, CardHeader } from "./ui/card"
 import { Badge } from "./ui/Badge"
 import { Button } from "./ui/Button"
-import { Input } from "./ui/Input"
+import { Input } from "./ui/input"
 
 const CommunitySection = () => {
   const [activeFilter, setActiveFilter] = useState("all")
@@ -168,30 +168,32 @@ const CommunitySection = () => {
 
   const PostCard = ({ post }) => (
     <Card
-      className="glass-effect border-gray-700 hover:border-green-500/50 transition-all cursor-pointer"
+      className="glass-effect border-gray-700 hover:border-green-500/50 transition-all cursor-pointer overflow-hidden"
       onClick={() => setSelectedPost(post)}
     >
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 min-w-0 flex-1">
             <img
               src={post.user.avatar || "/placeholder.svg"}
               alt={post.user.name}
-              className="w-10 h-10 rounded-full border border-gray-600"
+              className="w-10 h-10 rounded-full border border-gray-600 flex-shrink-0"
             />
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="font-semibold text-white">{post.user.name}</h3>
-                {post.user.verified && <Badge className="bg-blue-600 text-white text-xs">✓</Badge>}
-                {post.user.badge && <Badge className="bg-purple-600 text-white text-xs">{post.user.badge}</Badge>}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center space-x-2 flex-wrap">
+                <h3 className="font-semibold text-white truncate">{post.user.name}</h3>
+                {post.user.verified && <Badge className="bg-blue-600 text-white text-xs flex-shrink-0">✓</Badge>}
+                {post.user.badge && (
+                  <Badge className="bg-purple-600 text-white text-xs flex-shrink-0">{post.user.badge}</Badge>
+                )}
               </div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-400 truncate">
                 {post.user.location} • {post.timestamp}
               </p>
             </div>
           </div>
           <Badge
-            className={`text-xs ${
+            className={`text-xs flex-shrink-0 ${
               post.type === "transformation"
                 ? "bg-pink-600"
                 : post.type === "review"
@@ -214,7 +216,7 @@ const CommunitySection = () => {
 
       <CardContent className="space-y-4">
         <div>
-          <h2 className="text-lg font-semibold text-white mb-2">{post.content.title}</h2>
+          <h2 className="text-lg font-semibold text-white mb-2 line-clamp-2">{post.content.title}</h2>
           <p className="text-gray-300 text-sm line-clamp-3">{post.content.description}</p>
         </div>
 
@@ -332,98 +334,113 @@ const CommunitySection = () => {
   )
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-white">MamaEarth Community</h1>
-        <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-          Join thousands of beauty enthusiasts sharing their glow stories, reviews, and tips
-        </p>
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Video Background */}
+      <div className="absolute inset-0 z-0">
+        <video autoPlay muted loop playsInline className="w-full h-full object-cover opacity-20">
+          <source src="/placeholder.mp4" type="video/mp4" />
+          {/* Fallback gradient background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-green-900/30 via-gray-900/50 to-purple-900/30" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900/80 via-black/60 to-gray-900/80" />
       </div>
 
-      {/* Search and Filters */}
-      <Card className="glass-effect border-gray-700">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search posts, products, or users..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-gray-800 border-gray-600 text-white"
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-gray-400" />
-              <div className="flex space-x-2">
-                {filters.map((filter) => (
-                  <Button
-                    key={filter.id}
-                    variant={activeFilter === filter.id ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setActiveFilter(filter.id)}
-                    className={
-                      activeFilter === filter.id
-                        ? "bg-green-600 hover:bg-green-700"
-                        : "border-gray-600 text-gray-300 hover:bg-gray-800"
-                    }
-                  >
-                    {filter.label} ({filter.count})
-                  </Button>
-                ))}
+      {/* Content */}
+      <div className="relative z-10 space-y-8 p-4 sm:p-6 lg:p-8">
+        {/* Header */}
+        <div className="text-center space-y-4 max-w-4xl mx-auto">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white">MamaEarth Community</h1>
+          <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto">
+            Join thousands of beauty enthusiasts sharing their glow stories, reviews, and tips
+          </p>
+        </div>
+
+        {/* Search and Filters */}
+        <Card className="glass-effect border-gray-700 max-w-6xl mx-auto">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search posts, products, or users..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              <div className="flex items-center space-x-2 overflow-x-auto pb-2 lg:pb-0">
+                <Filter className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                <div className="flex space-x-2 min-w-max">
+                  {filters.map((filter) => (
+                    <Button
+                      key={filter.id}
+                      variant={activeFilter === filter.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setActiveFilter(filter.id)}
+                      className={
+                        activeFilter === filter.id
+                          ? "bg-green-600 hover:bg-green-700 flex-shrink-0"
+                          : "border-gray-600 text-gray-300 hover:bg-gray-800 flex-shrink-0"
+                      }
+                    >
+                      {filter.label} ({filter.count})
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Community Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto">
+          <Card className="glass-effect border-gray-700">
+            <CardContent className="p-4 sm:p-6 text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-green-400">50K+</div>
+              <p className="text-gray-400 text-sm sm:text-base">Active Members</p>
+            </CardContent>
+          </Card>
+          <Card className="glass-effect border-gray-700">
+            <CardContent className="p-4 sm:p-6 text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-blue-400">1.2K+</div>
+              <p className="text-gray-400 text-sm sm:text-base">Posts This Week</p>
+            </CardContent>
+          </Card>
+          <Card className="glass-effect border-gray-700">
+            <CardContent className="p-4 sm:p-6 text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-pink-400">234</div>
+              <p className="text-gray-400 text-sm sm:text-base">Glow Stories</p>
+            </CardContent>
+          </Card>
+          <Card className="glass-effect border-gray-700">
+            <CardContent className="p-4 sm:p-6 text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-yellow-400">4.8★</div>
+              <p className="text-gray-400 text-sm sm:text-base">Avg Rating</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Posts Grid */}
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {filteredPosts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Community Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="glass-effect border-gray-700">
-          <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-green-400">50K+</div>
-            <p className="text-gray-400">Active Members</p>
-          </CardContent>
-        </Card>
-        <Card className="glass-effect border-gray-700">
-          <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-blue-400">1.2K+</div>
-            <p className="text-gray-400">Posts This Week</p>
-          </CardContent>
-        </Card>
-        <Card className="glass-effect border-gray-700">
-          <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-pink-400">234</div>
-            <p className="text-gray-400">Glow Stories</p>
-          </CardContent>
-        </Card>
-        <Card className="glass-effect border-gray-700">
-          <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-yellow-400">4.8★</div>
-            <p className="text-gray-400">Avg Rating</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Posts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredPosts.map((post) => (
-          <PostCard key={post.id} post={post} />
-        ))}
-      </div>
-
-      {/* Load More */}
-      <div className="text-center">
-        <Button className="bg-green-600 hover:bg-green-700">Load More Posts</Button>
+        {/* Load More */}
+        <div className="text-center max-w-6xl mx-auto">
+          <Button className="bg-green-600 hover:bg-green-700">Load More Posts</Button>
+        </div>
       </div>
 
       {/* Post Detail Modal */}
       {selectedPost && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto my-8">
+            <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-4 sm:p-6 z-10">
+              <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold text-white">Post Details</h2>
                 <Button
                   variant="ghost"
@@ -431,9 +448,12 @@ const CommunitySection = () => {
                   onClick={() => setSelectedPost(null)}
                   className="text-gray-400 hover:text-white"
                 >
-                  ✕
+                  <X className="h-5 w-5" />
                 </Button>
               </div>
+            </div>
+
+            <div className="p-4 sm:p-6">
               <PostCard post={selectedPost} />
 
               {/* Comments Section */}
@@ -445,10 +465,10 @@ const CommunitySection = () => {
                       <img
                         src={`/placeholder.svg?height=32&width=32&text=U${i}`}
                         alt="User"
-                        className="w-8 h-8 rounded-full"
+                        className="w-8 h-8 rounded-full flex-shrink-0"
                       />
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-1 flex-wrap">
                           <span className="text-sm font-medium text-white">User {i}</span>
                           <span className="text-xs text-gray-400">2h ago</span>
                         </div>

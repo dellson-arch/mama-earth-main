@@ -4,7 +4,7 @@ import { useState } from "react"
 import { CreditCard, Shield } from "lucide-react"
 import { Button } from "./ui/Button"
 import { Input } from "./ui/Input"
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card"
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 
 const CheckoutPage = ({ cartItems = [], onNavigate, user, total, clearCart }) => {
   const [orderPlaced, setOrderPlaced] = useState(false)
