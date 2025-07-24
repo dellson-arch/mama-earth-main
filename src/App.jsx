@@ -1,47 +1,63 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Check } from "lucide-react"
 import Header from "./components/Header"
-import Footer from "./components/Footer"
 import HomePage from "./components/HomePage"
 import ProductsPage from "./components/ProductsPage"
 import WishlistPage from "./components/WishlistPage"
 import SignInPage from "./components/SignInPage"
 import CheckoutPage from "./components/CheckoutPage"
+import SkinHairAnalyzer from "./components/SkinHairAnalyzer"
+import RecommendationsPage from "./components/RecommendationsPage"
 import ShoppingCartSidebar from "./components/ShoppingCartSidebar"
-import "./index.css"
+import Footer from "./components/Footer"
+import NotificationToast from "./components/NotificationToast"
+import AIAssistant from "./components/AIAssistant"
+import TreeTracker from "./components/TreeTracker"
+import CommunitySection from "./components/CommunitySection"
 
 function App() {
   const [currentPage, setCurrentPage] = useState("home")
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [cart, setCart] = useState([])
-  const [wishlist, setWishlist] = useState([])
   const [isCartOpen, setIsCartOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false)
+  const [cartItems, setCartItems] = useState([])
+  const [wishlistItems, setWishlistItems] = useState([])
   const [user, setUser] = useState(null)
-  const [showNotification, setShowNotification] = useState(false)
-  const [notificationMessage, setNotificationMessage] = useState("")
+  const [notifications, setNotifications] = useState([])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [userProfile, setUserProfile] = useState(null)
+  const [recommendations, setRecommendations] = useState([])
 
-  // Load data from localStorage on mount
+  // Load data from localStorage
   useEffect(() => {
     const savedCart = localStorage.getItem("mamaearth-cart")
     const savedWishlist = localStorage.getItem("mamaearth-wishlist")
     const savedUser = localStorage.getItem("mamaearth-user")
+    const savedProfile = localStorage.getItem("mamaearth-profile")
 
-    if (savedCart) setCart(JSON.parse(savedCart))
-    if (savedWishlist) setWishlist(JSON.parse(savedWishlist))
+    if (savedCart) setCartItems(JSON.parse(savedCart))
+    if (savedWishlist) setWishlistItems(JSON.parse(savedWishlist))
     if (savedUser) setUser(JSON.parse(savedUser))
+    if (savedProfile) setUserProfile(JSON.parse(savedProfile))
+
+    // Listen for custom navigation events
+    const handleNavigateToAnalyzer = () => {
+      setCurrentPage("analyzer")
+      setIsAIAssistantOpen(false)
+    }
+
+    window.addEventListener("navigate-to-analyzer", handleNavigateToAnalyzer)
+    return () => window.removeEventListener("navigate-to-analyzer", handleNavigateToAnalyzer)
   }, [])
 
-  // Save to localStorage whenever state changes
+  // Save to localStorage
   useEffect(() => {
-    localStorage.setItem("mamaearth-cart", JSON.stringify(cart))
-  }, [cart])
+    localStorage.setItem("mamaearth-cart", JSON.stringify(cartItems))
+  }, [cartItems])
 
   useEffect(() => {
-    localStorage.setItem("mamaearth-wishlist", JSON.stringify(wishlist))
-  }, [wishlist])
+    localStorage.setItem("mamaearth-wishlist", JSON.stringify(wishlistItems))
+  }, [wishlistItems])
 
   useEffect(() => {
     if (user) {
@@ -51,137 +67,231 @@ function App() {
     }
   }, [user])
 
-  const showNotificationMessage = (message) => {
-    setNotificationMessage(message)
-    setShowNotification(true)
-    setTimeout(() => setShowNotification(false), 3000)
+  useEffect(() => {
+    if (userProfile) {
+      localStorage.setItem("mamaearth-profile", JSON.stringify(userProfile))
+    }
+  }, [userProfile])
+
+  const showNotification = (message, type = "success") => {
+    const id = Date.now()
+    const notification = { id, message, type }
+    setNotifications((prev) => [...prev, notification])
+
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id))
+    }, 3000)
   }
 
   const addToCart = (product, quantity = 1) => {
-    const existingItem = cart.find((item) => item.id === product.id)
-    if (existingItem) {
-      setCart(cart.map((item) => (item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item)))
-      showNotificationMessage(`Updated ${product.name} quantity in cart`)
-    } else {
-      setCart([...cart, { ...product, quantity }])
-      showNotificationMessage(`${product.name} added to cart`)
+    setCartItems((prev) => {
+      const existing = prev.find((item) => item.id === product.id)
+      if (existing) {
+        showNotification(`Updated ${product.name} quantity in cart`)
+        return prev.map((item) => (item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item))
+      } else {
+        showNotification(`${product.name} added to cart`)
+        return [...prev, { ...product, quantity }]
+      }
+    })
+
+    // Update user's tree count
+    if (user) {
+      setUser((prev) => ({
+        ...prev,
+        treesPlanted: (prev.treesPlanted || 0) + 1,
+      }))
     }
   }
 
   const removeFromCart = (productId) => {
-    const product = cart.find((item) => item.id === productId)
-    setCart(cart.filter((item) => item.id !== productId))
-    showNotificationMessage(`${product?.name} removed from cart`)
+    const product = cartItems.find((item) => item.id === productId)
+    setCartItems((prev) => prev.filter((item) => item.id !== productId))
+    if (product) {
+      showNotification(`${product.name} removed from cart`, "info")
+    }
   }
 
-  const updateCartQuantity = (productId, newQuantity) => {
-    if (newQuantity <= 0) {
+  const updateCartQuantity = (productId, quantity) => {
+    if (quantity <= 0) {
       removeFromCart(productId)
       return
     }
-    setCart(cart.map((item) => (item.id === productId ? { ...item, quantity: newQuantity } : item)))
+    setCartItems((prev) => prev.map((item) => (item.id === productId ? { ...item, quantity } : item)))
   }
 
-  const toggleWishlist = (product) => {
-    const isInWishlist = wishlist.some((item) => item.id === product.id)
-    if (isInWishlist) {
-      setWishlist(wishlist.filter((item) => item.id !== product.id))
-      showNotificationMessage(`${product.name} removed from wishlist`)
-    } else {
-      setWishlist([...wishlist, product])
-      showNotificationMessage(`${product.name} added to wishlist`)
+  const addToWishlist = (product) => {
+    setWishlistItems((prev) => {
+      const exists = prev.find((item) => item.id === product.id)
+      if (exists) {
+        showNotification(`${product.name} removed from wishlist`, "info")
+        return prev.filter((item) => item.id !== product.id)
+      } else {
+        showNotification(`${product.name} added to wishlist`)
+        return [...prev, product]
+      }
+    })
+  }
+
+  const removeFromWishlist = (productId) => {
+    const product = wishlistItems.find((item) => item.id === productId)
+    setWishlistItems((prev) => prev.filter((item) => item.id !== productId))
+    if (product) {
+      showNotification(`${product.name} removed from wishlist`, "info")
     }
   }
 
   const getCartTotal = () => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0)
+    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
   }
 
   const getCartItemsCount = () => {
-    return cart.reduce((total, item) => total + item.quantity, 0)
+    return cartItems.reduce((total, item) => total + item.quantity, 0)
+  }
+
+  const handleProductRecommend = (products) => {
+    setCurrentPage("products")
+    setSearchQuery(products[0] || "")
+    setIsAIAssistantOpen(false)
   }
 
   const renderPage = () => {
     switch (currentPage) {
+      case "home":
+        return (
+          <HomePage
+            onNavigate={setCurrentPage}
+            addToCart={addToCart}
+            addToWishlist={addToWishlist}
+            wishlistItems={wishlistItems}
+          />
+        )
       case "products":
         return (
           <ProductsPage
-            setCurrentPage={setCurrentPage}
-            addToCart={addToCart}
-            toggleWishlist={toggleWishlist}
-            wishlist={wishlist}
+            onAddToCart={addToCart}
+            onAddToWishlist={addToWishlist}
+            wishlistItems={wishlistItems}
             searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
           />
         )
-      case "signin":
-        return <SignInPage setCurrentPage={setCurrentPage} setUser={setUser} />
       case "wishlist":
         return (
-          <WishlistPage
-            setCurrentPage={setCurrentPage}
-            wishlist={wishlist}
-            toggleWishlist={toggleWishlist}
-            addToCart={addToCart}
-          />
+          <WishlistPage wishlistItems={wishlistItems} removeFromWishlist={removeFromWishlist} addToCart={addToCart} />
         )
+      case "signin":
+        return <SignInPage onNavigate={setCurrentPage} setUser={setUser} />
       case "checkout":
         return (
-          <CheckoutPage setCurrentPage={setCurrentPage} cart={cart} getCartTotal={getCartTotal} setCart={setCart} />
+          <CheckoutPage
+            cartItems={cartItems}
+            onNavigate={setCurrentPage}
+            user={user}
+            total={getCartTotal()}
+            clearCart={() => setCartItems([])}
+          />
+        )
+      case "analyzer":
+        return (
+          <SkinHairAnalyzer
+            onNavigate={setCurrentPage}
+            setUserProfile={setUserProfile}
+            showNotification={showNotification}
+            setRecommendations={setRecommendations}
+          />
+        )
+      case "recommendations":
+        return (
+          <RecommendationsPage
+            onNavigate={setCurrentPage}
+            addToCart={addToCart}
+            addToWishlist={addToWishlist}
+            userProfile={userProfile}
+            wishlistItems={wishlistItems}
+            recommendations={recommendations}
+          />
+        )
+      case "community":
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 pt-20 pb-8">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+              <CommunitySection />
+            </div>
+          </div>
+        )
+      case "impact":
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 pt-20 pb-8">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-8">
+                <h1 className="text-4xl font-bold text-white mb-4">Your Environmental Impact</h1>
+                <p className="text-xl text-gray-400">See how you're making a difference with every purchase</p>
+              </div>
+              <TreeTracker user={user} />
+            </div>
+          </div>
         )
       default:
         return (
           <HomePage
-            setCurrentPage={setCurrentPage}
+            onNavigate={setCurrentPage}
             addToCart={addToCart}
-            toggleWishlist={toggleWishlist}
-            wishlist={wishlist}
+            addToWishlist={addToWishlist}
+            wishlistItems={wishlistItems}
           />
         )
     }
   }
 
-  if (currentPage === "signin") {
-    return <SignInPage setCurrentPage={setCurrentPage} setUser={setUser} />
-  }
-
   return (
-    <div className="min-h-screen bg-gray-900">
-      {/* Notification */}
-      {showNotification && (
-        <div className="fixed top-4 right-4 z-50 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg animate-fade-in">
-          <div className="flex items-center space-x-2">
-            <Check className="h-4 w-4" />
-            <span>{notificationMessage}</span>
-          </div>
-        </div>
-      )}
+    <div className="min-h-screen bg-hero-pattern">
+      {/* Floating particles background */}
+      <div className="floating-particles">
+        <div className="particle"></div>
+        <div className="particle"></div>
+        <div className="particle"></div>
+        <div className="particle"></div>
+      </div>
 
       <Header
-        setCurrentPage={setCurrentPage}
-        isMobileMenuOpen={isMobileMenuOpen}
-        setIsMobileMenuOpen={setIsMobileMenuOpen}
-        getCartItemsCount={getCartItemsCount}
-        setIsCartOpen={setIsCartOpen}
+        onNavigate={setCurrentPage}
+        cartItemsCount={getCartItemsCount()}
+        wishlistCount={wishlistItems.length}
+        onCartClick={() => setIsCartOpen(true)}
+        user={user}
+        onLogout={() => setUser(null)}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        user={user}
-        setUser={setUser}
-        wishlist={wishlist}
+        currentPage={currentPage}
+        onAIAssistantOpen={() => setIsAIAssistantOpen(true)}
       />
 
-      {renderPage()}
+      <main className="relative z-10">{renderPage()}</main>
 
-      <Footer setCurrentPage={setCurrentPage} />
+      <Footer onNavigate={setCurrentPage} />
 
       <ShoppingCartSidebar
         isOpen={isCartOpen}
-        setIsOpen={setIsCartOpen}
-        cart={cart}
-        removeFromCart={removeFromCart}
-        updateCartQuantity={updateCartQuantity}
-        getCartTotal={getCartTotal}
+        onClose={() => setIsCartOpen(false)}
+        cartItems={cartItems}
+        onUpdateQuantity={updateCartQuantity}
+        onRemoveFromCart={removeFromCart}
         setCurrentPage={setCurrentPage}
       />
+
+      <AIAssistant
+        isOpen={isAIAssistantOpen}
+        onClose={() => setIsAIAssistantOpen(false)}
+        onProductRecommend={handleProductRecommend}
+      />
+
+      {/* Notifications */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {notifications.map((notification) => (
+          <NotificationToast key={notification.id} message={notification.message} type={notification.type} />
+        ))}
+      </div>
     </div>
   )
 }

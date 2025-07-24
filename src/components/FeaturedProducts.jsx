@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "../components/ui/button"
+import { Button } from "./ui/Button"
 import ProductCard from "./ProductCard"
 
 export default function FeaturedProducts({ setCurrentPage, addToCart, toggleWishlist, wishlist }) {

@@ -1,80 +1,102 @@
 "use client"
-import { Leaf, Mail, Phone } from "lucide-react"
 
-export default function Footer({ setCurrentPage }) {
+import { Leaf, Facebook, Twitter, Instagram, Youtube } from "lucide-react"
+
+const Footer = ({ onNavigate }) => {
   return (
     <footer className="bg-gray-900 border-t border-gray-800">
-      <div className="container mx-auto px-4 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div>
-            <div className="flex items-center space-x-2 mb-4 cursor-pointer" onClick={() => setCurrentPage("home")}>
-              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
-                <Leaf className="h-6 w-6 text-white" />
+          {/* Brand */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
+                <Leaf className="h-5 w-5 text-white" />
               </div>
-              <span className="text-2xl font-bold text-white">MamaEarth</span>
+              <span className="text-xl font-bold gradient-text">MamaEarth</span>
             </div>
-            <p className="text-gray-400 mb-4">Natural beauty products made with love for you and your family.</p>
+            <p className="text-gray-400 text-sm">
+              India's first MadeSafe certified brand. Natural, toxin-free products for you and your family.
+            </p>
+            <div className="flex space-x-4">
+              <Facebook className="h-5 w-5 text-gray-400 hover:text-white cursor-pointer" />
+              <Twitter className="h-5 w-5 text-gray-400 hover:text-white cursor-pointer" />
+              <Instagram className="h-5 w-5 text-gray-400 hover:text-white cursor-pointer" />
+              <Youtube className="h-5 w-5 text-gray-400 hover:text-white cursor-pointer" />
+            </div>
           </div>
 
+          {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">Quick Links</h3>
+            <h3 className="text-white font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li>
-                <button
-                  onClick={() => setCurrentPage("products")}
-                  className="text-gray-400 hover:text-green-400 transition-colors"
-                >
-                  All Products
+                <button onClick={() => onNavigate("home")} className="text-gray-400 hover:text-white text-sm">
+                  Home
                 </button>
               </li>
               <li>
-                <button
-                  onClick={() => setCurrentPage("wishlist")}
-                  className="text-gray-400 hover:text-green-400 transition-colors"
-                >
-                  Wishlist
+                <button onClick={() => onNavigate("products")} className="text-gray-400 hover:text-white text-sm">
+                  Products
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate("analyzer")} className="text-gray-400 hover:text-white text-sm">
+                  AI Analyzer
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate("about")} className="text-gray-400 hover:text-white text-sm">
+                  About Us
                 </button>
               </li>
             </ul>
           </div>
 
+          {/* Customer Care */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">Customer Care</h3>
+            <h3 className="text-white font-semibold mb-4">Customer Care</h3>
             <ul className="space-y-2">
               <li>
-                <span className="text-gray-400">Contact Us</span>
+                <a href="#" className="text-gray-400 hover:text-white text-sm">
+                  Contact Us
+                </a>
               </li>
               <li>
-                <span className="text-gray-400">FAQ</span>
+                <a href="#" className="text-gray-400 hover:text-white text-sm">
+                  FAQ
+                </a>
               </li>
               <li>
-                <span className="text-gray-400">Shipping Info</span>
+                <a href="#" className="text-gray-400 hover:text-white text-sm">
+                  Shipping Info
+                </a>
               </li>
               <li>
-                <span className="text-gray-400">Returns</span>
+                <a href="#" className="text-gray-400 hover:text-white text-sm">
+                  Returns
+                </a>
               </li>
             </ul>
           </div>
 
+          {/* Contact Info */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">Get in Touch</h3>
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3">
-                <Mail className="h-5 w-5 text-gray-400" />
-                <span className="text-gray-400">hello@mamaearth.in</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <Phone className="h-5 w-5 text-gray-400" />
-                <span className="text-gray-400">1800-123-4567</span>
-              </div>
+            <h3 className="text-white font-semibold mb-4">Contact Info</h3>
+            <div className="space-y-2 text-sm text-gray-400">
+              <p>📧 support@mamaearth.in</p>
+              <p>📞 1800-123-4567</p>
+              <p>📍 Gurugram, Haryana, India</p>
             </div>
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-gray-800 text-center">
-          <p className="text-sm text-gray-400">© 2024 MamaEarth. All rights reserved.</p>
+        <div className="border-t border-gray-800 mt-8 pt-8 text-center">
+          <p className="text-gray-400 text-sm">© 2024 MamaEarth. All rights reserved. Made with 💚 for families.</p>
         </div>
       </div>
     </footer>
   )
 }
+
+export default Footer

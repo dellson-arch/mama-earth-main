@@ -1,83 +1,91 @@
 "use client"
+import { useState } from "react"
+import { Heart, ShoppingCart, Star, Eye } from "lucide-react"
+import { Button } from "./ui/Button"
+import { Badge } from "./ui/Badge"
+import { Card, CardContent } from "./ui/card"
 
-import { Button } from "../components/ui/button"
-import { Badge } from "../components/ui/badge"
-import { Card, CardContent } from "../components/ui/card"
-import { Heart, ShoppingCart, Star } from "lucide-react"
+const ProductCard = ({ product, onAddToCart, onAddToWishlist, isInWishlist = false }) => {
+  const [isHovered, setIsHovered] = useState(false)
 
-export default function ProductCard({ product, addToCart, toggleWishlist, isInWishlist }) {
+  const handleAddToCart = () => {
+    if (onAddToCart) {
+      onAddToCart(product)
+    }
+  }
+
+  const handleToggleWishlist = () => {
+    if (onAddToWishlist) {
+      onAddToWishlist(product)
+    }
+  }
+
+  const discountPercentage = product.originalPrice
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    : 0
+
   return (
-    <Card className="group cursor-pointer transition-all duration-300 bg-gray-900 border-gray-700 hover:border-green-500/50 hover:scale-105">
-      <CardContent className="p-0">
-        <div className="relative overflow-hidden">
-          <img
-            src={product.image || "/placeholder.svg"}
-            alt={product.name}
-            className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
-          />
-
-          <div className="absolute top-3 left-3 flex flex-col gap-2">
-            {product.isNew && <Badge className="bg-green-600 text-white">New</Badge>}
-            {product.isBestseller && <Badge className="bg-orange-600 text-white">Bestseller</Badge>}
-          </div>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation()
-              toggleWishlist(product)
-            }}
-            className={`absolute top-3 right-3 w-8 h-8 p-0 transition-all ${
-              isInWishlist ? "bg-red-500 hover:bg-red-600 text-white" : "bg-white/80 hover:bg-white text-gray-800"
-            }`}
-          >
-            <Heart className={`h-4 w-4 ${isInWishlist ? "fill-current" : ""}`} />
-          </Button>
-
-          <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-            <Button
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation()
-                addToCart(product)
-              }}
-            >
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              Add to Cart
+    <Card className="group hover:shadow-lg transition-all duration-300 overflow-hidden glass-effect rounded-lg">
+      <div
+        className="relative overflow-hidden"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <img
+          src={product.image || "/placeholder.svg"}
+          alt={product.name}
+          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+        />
+        <div className="absolute top-2 left-2 flex flex-col gap-1">
+          {product.isBestseller && <Badge className="bg-green-600 text-white">Bestseller</Badge>}
+          {product.isNew && <Badge className="bg-blue-600 text-white">New</Badge>}
+          {discountPercentage > 0 && <Badge className="bg-red-600 text-white">{discountPercentage}% OFF</Badge>}
+        </div>
+        <button
+          onClick={handleToggleWishlist}
+          className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 ${
+            isInWishlist ? "bg-red-500 text-white" : "bg-white/80 text-gray-700 hover:bg-red-500 hover:text-white"
+          }`}
+        >
+          <Heart className={`h-4 w-4 ${isInWishlist ? "fill-current" : ""}`} />
+        </button>
+        {isHovered && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+            <Button variant="outline" className="bg-white/90 text-gray-900 hover:bg-white">
+              <Eye className="h-4 w-4 mr-2" />
+              Quick View
             </Button>
           </div>
-        </div>
+        )}
+      </div>
 
-        <div className="p-4">
-          <h3 className="font-semibold mb-2 text-white group-hover:text-green-400 transition-colors">{product.name}</h3>
-
-          <div className="flex items-center mb-2">
+      <CardContent className="p-4">
+        <div className="space-y-2">
+          <h3 className="font-semibold text-white mb-2 line-clamp-2">{product.name}</h3>
+          <p className="text-gray-400 text-sm mb-3 line-clamp-2">{product.description}</p>
+          <div className="flex items-center mb-3">
             <div className="flex items-center">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`h-4 w-4 ${i < Math.floor(product.rating) ? "text-yellow-400 fill-current" : "text-gray-600"}`}
-                />
-              ))}
+              <Star className="h-4 w-4 text-yellow-400 fill-current" />
+              <span className="text-white ml-1 text-sm">{product.rating}</span>
             </div>
-            <span className="text-sm ml-2 text-gray-400">({product.reviews})</span>
+            <span className="text-gray-400 text-sm ml-2">({product.reviews} reviews)</span>
           </div>
-
-          <div className="flex items-center space-x-2">
-            <span className="text-lg font-bold text-white">₹{product.price}</span>
-            {product.originalPrice && (
-              <>
-                <span className="text-sm line-through text-gray-500">₹{product.originalPrice}</span>
-                <Badge variant="secondary" className="text-xs bg-green-600 text-white">
-                  {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
-                </Badge>
-              </>
-            )}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-xl font-bold text-green-400">₹{product.price}</span>
+              {product.originalPrice && (
+                <span className="text-gray-500 line-through text-sm">₹{product.originalPrice}</span>
+              )}
+            </div>
           </div>
+          <Button onClick={handleAddToCart} className="w-full btn-primary">
+            <ShoppingCart className="h-4 w-4 mr-2" />
+            Add to Cart
+          </Button>
         </div>
       </CardContent>
     </Card>
   )
 }
+
+export default ProductCard

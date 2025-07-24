@@ -1,9 +1,9 @@
 "use client"
 
-import { Card, CardContent } from "../components/ui/card"
-import { Badge } from "../components/ui/badge"
+import { Card, CardContent } from "./ui/card"
+import { Badge } from "./ui/Badge"
 
-export default function CategoryGrid({ setCurrentPage }) {
+export default function CategoryGrid({ onNavigate }) {
   const categories = [
     {
       id: "skincare",
@@ -48,7 +48,7 @@ export default function CategoryGrid({ setCurrentPage }) {
             <Card
               key={category.id}
               className="cursor-pointer transition-all duration-300 bg-gray-800 border-gray-700 hover:border-green-500/50 hover:scale-105 group"
-              onClick={() => setCurrentPage("products")}
+              onClick={() => onNavigate("products")}
             >
               <CardContent className="p-6 text-center">
                 <div className="w-24 h-24 mx-auto mb-4 rounded-2xl bg-green-500/10 p-1 group-hover:bg-green-500/20 transition-colors">
