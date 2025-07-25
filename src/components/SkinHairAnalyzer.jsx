@@ -1,583 +1,529 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Camera, Upload, Sparkles, ArrowRight, CheckCircle, Info, X, ArrowLeft } from "lucide-react"
 import { Button } from "./ui/Button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { Badge } from "./ui/Badge"
+import {
+  Camera,
+  Upload,
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle,
+  Star,
+  Sparkles,
+  Award,
+  Heart,
+  ShoppingCart,
+  X,
+} from "lucide-react"
 
-const SkinHairAnalyzer = ({ onNavigate, setUserProfile, showNotification, setRecommendations }) => {
+const SkinHairAnalyzer = ({ onAddToCart, onAddToWishlist, onProductClick }) => {
+  const [isOpen, setIsOpen] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
-  const [analysisType, setAnalysisType] = useState("")
   const [uploadedImage, setUploadedImage] = useState(null)
+  const [analysisData, setAnalysisData] = useState(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [analysisResults, setAnalysisResults] = useState(null)
-  const [showInstructions, setShowInstructions] = useState(true)
+  const [answers, setAnswers] = useState({})
   const fileInputRef = useRef(null)
-  const cameraInputRef = useRef(null)
 
-  const [userAnswers, setUserAnswers] = useState({
-    age: "",
-    skinType: "",
-    concerns: [],
-    currentProducts: [],
-    lifestyle: "",
-    budget: "",
-  })
+  const steps = [
+    { id: 1, title: "Upload Photo", description: "Take or upload a clear photo" },
+    { id: 2, title: "Answer Questions", description: "Tell us about your concerns" },
+    { id: 3, title: "AI Analysis", description: "Our AI analyzes your skin/hair" },
+    { id: 4, title: "Get Results", description: "Receive personalized recommendations" },
+  ]
 
-  const skinQuestions = [
-    {
-      id: "age",
-      question: "What's your age group?",
-      type: "single",
-      options: ["18-25", "26-35", "36-45", "46-55", "55+"],
-    },
+  const questions = [
     {
       id: "skinType",
-      question: "What's your skin type?",
-      type: "single",
+      question: "What is your skin type?",
       options: ["Oily", "Dry", "Combination", "Sensitive", "Normal"],
     },
     {
       id: "concerns",
-      question: "What are your main skin concerns? (Select all that apply)",
-      type: "multiple",
-      options: ["Acne", "Dark Spots", "Wrinkles", "Dryness", "Oiliness", "Sensitivity", "Dullness", "Pores"],
+      question: "What are your main concerns?",
+      options: ["Acne", "Dark Spots", "Wrinkles", "Dullness", "Pores", "Dryness"],
+      multiple: true,
     },
     {
-      id: "currentProducts",
+      id: "routine",
+      question: "How often do you follow a skincare routine?",
+      options: ["Daily", "2-3 times a week", "Weekly", "Rarely", "Never"],
+    },
+    {
+      id: "products",
       question: "What products do you currently use?",
-      type: "multiple",
-      options: ["Face Wash", "Moisturizer", "Sunscreen", "Serum", "Toner", "Face Mask", "None"],
-    },
-    {
-      id: "lifestyle",
-      question: "How would you describe your lifestyle?",
-      type: "single",
-      options: ["Very Active", "Moderately Active", "Sedentary", "Stressed", "Relaxed"],
-    },
-    {
-      id: "budget",
-      question: "What's your monthly skincare budget?",
-      type: "single",
-      options: ["Under ₹500", "₹500-1000", "₹1000-2000", "₹2000-5000", "Above ₹5000"],
+      options: ["Face Wash", "Moisturizer", "Serum", "Sunscreen", "Face Mask", "None"],
+      multiple: true,
     },
   ]
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0]
     if (file) {
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        showNotification("Image size should be less than 5MB", "error")
-        return
-      }
-
-      // Check file type
-      if (!file.type.startsWith("image/")) {
-        showNotification("Please select a valid image file", "error")
-        return
-      }
-
       const reader = new FileReader()
       reader.onload = (e) => {
         setUploadedImage(e.target.result)
-        setShowInstructions(false)
-        showNotification("Photo uploaded successfully! 📸", "success")
-      }
-      reader.onerror = () => {
-        showNotification("Error uploading image. Please try again.", "error")
       }
       reader.readAsDataURL(file)
     }
   }
 
   const handleCameraCapture = () => {
-    // Check if camera is supported
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      showNotification("Camera not supported on this device", "error")
-      return
-    }
-
-    // Trigger camera input
-    if (cameraInputRef.current) {
-      cameraInputRef.current.click()
+    if (fileInputRef.current) {
+      fileInputRef.current.setAttribute("capture", "environment")
+      fileInputRef.current.click()
     }
   }
 
   const handleAnswerChange = (questionId, answer, isMultiple = false) => {
-    setUserAnswers((prev) => {
-      if (isMultiple) {
-        const currentAnswers = prev[questionId] || []
-        const updatedAnswers = currentAnswers.includes(answer)
-          ? currentAnswers.filter((a) => a !== answer)
-          : [...currentAnswers, answer]
-        return { ...prev, [questionId]: updatedAnswers }
-      } else {
-        return { ...prev, [questionId]: answer }
-      }
-    })
-  }
-
-  const analyzeImage = async () => {
-    setIsAnalyzing(true)
-
-    // Simulate AI analysis with realistic delay
-    setTimeout(() => {
-      const mockResults = {
-        skinType: userAnswers.skinType || "Combination",
-        concerns: userAnswers.concerns.length > 0 ? userAnswers.concerns : ["Acne", "Dark Spots", "Oiliness"],
-        skinHealth: Math.floor(Math.random() * 30) + 70, // 70-100
-        recommendations: [
-          {
-            id: 1,
-            name: "Tea Tree Face Wash",
-            price: 299,
-            originalPrice: 399,
-            image: "/placeholder.svg?height=200&width=200&text=Tea+Tree+Face+Wash",
-            reason: "Perfect for acne-prone skin with natural tea tree oil",
-            rating: 4.5,
-            reviews: 1250,
-            category: "Face Wash",
-          },
-          {
-            id: 2,
-            name: "Vitamin C Face Serum",
-            price: 599,
-            originalPrice: 799,
-            image: "/placeholder.svg?height=200&width=200&text=Vitamin+C+Serum",
-            reason: "Helps reduce dark spots and brighten skin",
-            rating: 4.7,
-            reviews: 890,
-            category: "Serum",
-          },
-          {
-            id: 3,
-            name: "Neem Face Mask",
-            price: 199,
-            originalPrice: 299,
-            image: "/placeholder.svg?height=200&width=200&text=Neem+Face+Mask",
-            reason: "Natural antibacterial properties for clear skin",
-            rating: 4.3,
-            reviews: 567,
-            category: "Face Mask",
-          },
-          {
-            id: 4,
-            name: "Aloe Vera Moisturizer",
-            price: 349,
-            originalPrice: 449,
-            image: "/placeholder.svg?height=200&width=200&text=Aloe+Vera+Moisturizer",
-            reason: "Gentle hydration without clogging pores",
-            rating: 4.6,
-            reviews: 1100,
-            category: "Moisturizer",
-          },
-        ],
-      }
-
-      setAnalysisResults(mockResults)
-      setRecommendations(mockResults.recommendations)
-      setUserProfile({
-        skinType: mockResults.skinType,
-        concerns: mockResults.concerns,
-        skinHealth: mockResults.skinHealth,
-        ...userAnswers,
-      })
-      setIsAnalyzing(false)
-      setCurrentStep(4)
-      showNotification("Analysis complete! Check your personalized recommendations 🎉", "success")
-    }, 3000)
-  }
-
-  const renderStep = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <Card className="glass-effect border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-white text-center">Choose Analysis Type</CardTitle>
-              <p className="text-gray-400 text-center">What would you like to analyze today?</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <button
-                  onClick={() => {
-                    setAnalysisType("skin")
-                    setCurrentStep(2)
-                  }}
-                  className="p-8 border-2 border-gray-700 rounded-lg hover:border-green-500 transition-all group bg-gradient-to-br from-pink-600/10 to-pink-800/10"
-                >
-                  <div className="text-center space-y-4">
-                    <div className="w-20 h-20 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
-                      <Sparkles className="h-10 w-10 text-white" />
-                    </div>
-                    <h3 className="text-2xl font-semibold text-white">Skin Analysis</h3>
-                    <p className="text-gray-400">
-                      Get personalized skincare recommendations based on your skin type and concerns
-                    </p>
-                    <Badge className="bg-pink-600 text-white">Most Popular</Badge>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setAnalysisType("hair")
-                    setCurrentStep(2)
-                  }}
-                  className="p-8 border-2 border-gray-700 rounded-lg hover:border-green-500 transition-all group bg-gradient-to-br from-purple-600/10 to-purple-800/10"
-                >
-                  <div className="text-center space-y-4">
-                    <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
-                      <Sparkles className="h-10 w-10 text-white" />
-                    </div>
-                    <h3 className="text-2xl font-semibold text-white">Hair Analysis</h3>
-                    <p className="text-gray-400">Discover the perfect hair care routine for healthy, beautiful hair</p>
-                    <Badge className="bg-purple-600 text-white">Coming Soon</Badge>
-                  </div>
-                </button>
-              </div>
-            </CardContent>
-          </Card>
-        )
-
-      case 2:
-        return (
-          <div className="space-y-6">
-            {/* Instructions for Less Tech-Savvy Users */}
-            {showInstructions && (
-              <Card className="glass-effect border-blue-500/50 bg-blue-600/10">
-                <CardContent className="p-6">
-                  <div className="flex items-start space-x-3">
-                    <Info className="h-6 w-6 text-blue-400 mt-1 flex-shrink-0" />
-                    <div className="space-y-3">
-                      <h3 className="text-lg font-semibold text-blue-400">📸 How to Take a Perfect Photo</h3>
-                      <div className="space-y-2 text-sm text-gray-300">
-                        <p>
-                          • 🌞 <strong>Good lighting:</strong> Stand near a window or in bright light
-                        </p>
-                        <p>
-                          • 😊 <strong>Clean face:</strong> Remove makeup and wash your face
-                        </p>
-                        <p>
-                          • 📱 <strong>Hold steady:</strong> Keep your phone steady and close to your face
-                        </p>
-                        <p>
-                          • 👀 <strong>Look straight:</strong> Look directly at the camera
-                        </p>
-                        <p>
-                          • ✨ <strong>Don't worry:</strong> This helps us give you better recommendations!
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowInstructions(false)}
-                        className="text-blue-400 hover:text-blue-300"
-                      >
-                        Got it! <X className="h-4 w-4 ml-1" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <Card className="glass-effect border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white text-center">
-                  Upload Your {analysisType === "skin" ? "Face" : "Hair"} Photo
-                </CardTitle>
-                <p className="text-gray-400 text-center">
-                  Our AI will analyze your photo to give personalized recommendations
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {!uploadedImage ? (
-                  <div className="space-y-6">
-                    <div className="border-2 border-dashed border-gray-600 rounded-lg p-12 text-center hover:border-green-500 transition-colors">
-                      <div className="space-y-4">
-                        <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto">
-                          <Upload className="h-10 w-10 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-semibold text-white mb-2">Upload Your Photo</h3>
-                          <p className="text-gray-400 text-sm mb-4">Choose from your gallery or take a new photo</p>
-                          <p className="text-xs text-gray-500">Supported formats: JPG, PNG, HEIC (Max 5MB)</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Button onClick={handleCameraCapture} className="bg-green-600 hover:bg-green-700 h-14 text-lg">
-                        <Camera className="h-6 w-6 mr-3" />📸 Take Photo
-                      </Button>
-                      <Button
-                        onClick={() => fileInputRef.current?.click()}
-                        variant="outline"
-                        className="border-gray-600 text-gray-300 hover:bg-gray-800 h-14 text-lg"
-                      >
-                        <Upload className="h-6 w-6 mr-3" />📁 Choose from Gallery
-                      </Button>
-                    </div>
-
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                    <input
-                      ref={cameraInputRef}
-                      type="file"
-                      accept="image/*"
-                      capture="user"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-
-                    <div className="text-center">
-                      <Button
-                        variant="ghost"
-                        onClick={() => setCurrentStep(3)}
-                        className="text-gray-400 hover:text-white"
-                      >
-                        Skip photo upload and continue →
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    <div className="relative max-w-md mx-auto">
-                      <img
-                        src={uploadedImage || "/placeholder.svg"}
-                        alt="Uploaded"
-                        className="w-full rounded-lg border border-gray-600 shadow-lg"
-                      />
-                      <Badge className="absolute top-3 right-3 bg-green-600 text-white">
-                        <CheckCircle className="h-3 w-3 mr-1" />✅ Photo Ready
-                      </Badge>
-                    </div>
-                    <div className="text-center space-y-4">
-                      <p className="text-green-400 font-medium">Great! Your photo looks perfect for analysis.</p>
-                      <div className="flex justify-center space-x-4">
-                        <Button
-                          onClick={() => {
-                            setUploadedImage(null)
-                            setShowInstructions(true)
-                          }}
-                          variant="outline"
-                          className="border-gray-600 text-gray-300"
-                        >
-                          📷 Change Photo
-                        </Button>
-                        <Button onClick={() => setCurrentStep(3)} className="bg-green-600 hover:bg-green-700">
-                          Continue <ArrowRight className="h-4 w-4 ml-2" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )
-
-      case 3:
-        const currentQuestion = skinQuestions.find(
-          (q) => !userAnswers[q.id] || (Array.isArray(userAnswers[q.id]) && userAnswers[q.id].length === 0),
-        )
-
-        if (!currentQuestion) {
-          return (
-            <Card className="glass-effect border-gray-700">
-              <CardContent className="p-8 text-center space-y-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto">
-                  <CheckCircle className="h-10 w-10 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-semibold text-white mb-2">Ready for Analysis!</h3>
-                  <p className="text-gray-400">We have all the information we need to analyze your {analysisType}</p>
-                </div>
-                <Button
-                  onClick={analyzeImage}
-                  className="bg-green-600 hover:bg-green-700 h-12 px-8 text-lg"
-                  disabled={isAnalyzing}
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>🤖 Analyzing
-                      Your Skin...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-5 w-5 mr-3" />🚀 Start AI Analysis
-                    </>
-                  )}
-                </Button>
-                {isAnalyzing && <p className="text-sm text-gray-400">This may take a few seconds...</p>}
-              </CardContent>
-            </Card>
-          )
-        }
-
-        return (
-          <Card className="glass-effect border-gray-700">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-white">{currentQuestion.question}</CardTitle>
-                <Badge className="bg-green-600 text-white">
-                  {
-                    Object.keys(userAnswers).filter(
-                      (key) =>
-                        userAnswers[key] &&
-                        (Array.isArray(userAnswers[key]) ? userAnswers[key].length > 0 : userAnswers[key]),
-                    ).length
-                  }
-                  /{skinQuestions.length}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {currentQuestion.options.map((option) => {
-                  const isSelected =
-                    currentQuestion.type === "multiple"
-                      ? userAnswers[currentQuestion.id]?.includes(option)
-                      : userAnswers[currentQuestion.id] === option
-
-                  return (
-                    <button
-                      key={option}
-                      onClick={() =>
-                        handleAnswerChange(currentQuestion.id, option, currentQuestion.type === "multiple")
-                      }
-                      className={`p-4 rounded-lg border-2 transition-all text-left hover:scale-105 ${
-                        isSelected
-                          ? "border-green-500 bg-green-600/20 text-white shadow-lg"
-                          : "border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white hover:bg-gray-800/50"
-                      }`}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div
-                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                            isSelected ? "bg-green-500 border-green-500" : "border-gray-400"
-                          }`}
-                        >
-                          {isSelected && <CheckCircle className="h-3 w-3 text-white" />}
-                        </div>
-                        <span className="font-medium">{option}</span>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )
-
-      case 4:
-        if (!analysisResults) return null
-
-        return (
-          <div className="space-y-6">
-            <Card className="glass-effect border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white text-center">🎉 Your Analysis Results</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="text-center">
-                  <div className="w-32 h-32 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <span className="text-3xl font-bold text-white">{analysisResults.skinHealth}%</span>
-                  </div>
-                  <h3 className="text-2xl font-semibold text-white mb-2">Skin Health Score</h3>
-                  <p className="text-gray-400">Based on your photo and answers</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="p-6 bg-gradient-to-br from-blue-600/20 to-blue-800/20 rounded-lg border border-blue-600/30">
-                    <h4 className="font-semibold text-white mb-3">🔍 Detected Skin Type</h4>
-                    <Badge className="bg-blue-600 text-white text-lg px-4 py-2">{analysisResults.skinType}</Badge>
-                  </div>
-                  <div className="p-6 bg-gradient-to-br from-orange-600/20 to-orange-800/20 rounded-lg border border-orange-600/30">
-                    <h4 className="font-semibold text-white mb-3">⚠️ Main Concerns</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {analysisResults.concerns.map((concern, index) => (
-                        <Badge key={index} className="bg-orange-600 text-white">
-                          {concern}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-center space-y-4">
-                  <p className="text-gray-300">
-                    🤖 Our AI has analyzed your skin and found {analysisResults.recommendations.length} perfect products
-                    for you!
-                  </p>
-                  <Button
-                    onClick={() => onNavigate("recommendations")}
-                    className="bg-green-600 hover:bg-green-700 h-12 px-8 text-lg"
-                  >
-                    🛍️ View My Personalized Products <ArrowRight className="h-5 w-5 ml-2" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )
-
-      default:
-        return null
+    if (isMultiple) {
+      const currentAnswers = answers[questionId] || []
+      const newAnswers = currentAnswers.includes(answer)
+        ? currentAnswers.filter((a) => a !== answer)
+        : [...currentAnswers, answer]
+      setAnswers({ ...answers, [questionId]: newAnswers })
+    } else {
+      setAnswers({ ...answers, [questionId]: answer })
     }
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 pt-20 pb-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Back Button */}
-        <Button
-          variant="ghost"
-          onClick={() => (currentStep > 1 ? setCurrentStep(currentStep - 1) : onNavigate("home"))}
-          className="mb-6 text-gray-300 hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {currentStep === 1 ? "Back to Home" : "Previous Step"}
-        </Button>
+  const startAnalysis = () => {
+    setIsAnalyzing(true)
+    setCurrentStep(3)
 
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">🤖 AI Skin & Hair Analyzer</h1>
-          <p className="text-xl text-gray-400">Get personalized product recommendations powered by AI</p>
+    // Simulate AI analysis
+    setTimeout(() => {
+      const mockAnalysis = {
+        skinScore: 78,
+        skinType: answers.skinType || "Combination",
+        concerns: answers.concerns || ["Acne", "Dark Spots"],
+        recommendations: [
+          {
+            id: 1,
+            name: "Vitamin C Face Wash",
+            price: 299,
+            originalPrice: 399,
+            rating: 4.5,
+            image: "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=400&h=400&fit=crop",
+            reason: "Perfect for brightening and removing impurities",
+          },
+          {
+            id: 4,
+            name: "Tea Tree Face Serum",
+            price: 599,
+            originalPrice: 799,
+            rating: 4.7,
+            image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400&h=400&fit=crop",
+            reason: "Ideal for acne treatment and oil control",
+          },
+          {
+            id: 5,
+            name: "Aloe Vera Gel",
+            price: 199,
+            originalPrice: 299,
+            rating: 4.4,
+            image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400&h=400&fit=crop",
+            reason: "Soothes and hydrates sensitive skin",
+          },
+        ],
+        tips: [
+          "Use sunscreen daily to prevent further damage",
+          "Maintain a consistent skincare routine",
+          "Stay hydrated and eat antioxidant-rich foods",
+          "Avoid touching your face frequently",
+        ],
+      }
+
+      setAnalysisData(mockAnalysis)
+      setIsAnalyzing(false)
+      setCurrentStep(4)
+    }, 3000)
+  }
+
+  const nextStep = () => {
+    if (currentStep < 4) {
+      if (currentStep === 2) {
+        startAnalysis()
+      } else {
+        setCurrentStep(currentStep + 1)
+      }
+    }
+  }
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1)
+    }
+  }
+
+  const resetAnalyzer = () => {
+    setCurrentStep(1)
+    setUploadedImage(null)
+    setAnalysisData(null)
+    setAnswers({})
+    setIsAnalyzing(false)
+  }
+
+  const openAnalyzer = () => {
+    setIsOpen(true)
+    resetAnalyzer()
+  }
+
+  const closeAnalyzer = () => {
+    setIsOpen(false)
+    resetAnalyzer()
+  }
+
+  if (!isOpen) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 py-20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="mb-12">
+            <Badge className="glass-effect text-green-400 border-green-500/30 px-6 py-3 text-sm font-medium mb-6">
+              <Sparkles className="h-4 w-4 mr-2" />
+              AI-Powered Analysis
+            </Badge>
+            <h1 className="text-5xl font-black text-white mb-6">
+              Discover Your Perfect
+              <span className="bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent block">
+                Skincare Routine
+              </span>
+            </h1>
+            <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
+              Get personalized product recommendations based on AI analysis of your skin and hair
+            </p>
+            <Button
+              onClick={openAnalyzer}
+              size="lg"
+              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-4 text-lg font-semibold rounded-2xl shadow-2xl hover:shadow-green-500/25 transform hover:scale-105 transition-all duration-300"
+            >
+              Start AI Analysis
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-gray-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-700">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-700">
+          <div>
+            <h2 className="text-2xl font-bold text-white">AI Skin & Hair Analyzer</h2>
+            <p className="text-gray-400">Get personalized recommendations powered by AI</p>
+          </div>
+          <button onClick={closeAnalyzer} className="p-2 hover:bg-gray-700 rounded-lg transition-colors">
+            <X className="h-6 w-6 text-gray-400" />
+          </button>
         </div>
 
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center space-x-4 mb-4">
-            {[1, 2, 3, 4].map((step) => (
-              <div key={step} className="flex items-center">
+        {/* Progress Steps */}
+        <div className="p-6 border-b border-gray-700">
+          <div className="flex items-center justify-between">
+            {steps.map((step, index) => (
+              <div key={step.id} className="flex items-center">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
-                    currentStep >= step ? "bg-green-600 text-white shadow-lg" : "bg-gray-700 text-gray-400"
+                  className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+                    currentStep >= step.id
+                      ? "bg-green-500 border-green-500 text-white"
+                      : "border-gray-600 text-gray-400"
                   }`}
                 >
-                  {step}
+                  {currentStep > step.id ? (
+                    <CheckCircle className="h-5 w-5" />
+                  ) : (
+                    <span className="text-sm font-semibold">{step.id}</span>
+                  )}
                 </div>
-                {step < 4 && (
-                  <div
-                    className={`w-16 h-1 mx-2 transition-all ${currentStep > step ? "bg-green-600" : "bg-gray-700"}`}
-                  />
+                <div className="ml-3">
+                  <p className={`text-sm font-medium ${currentStep >= step.id ? "text-white" : "text-gray-400"}`}>
+                    {step.title}
+                  </p>
+                  <p className="text-xs text-gray-500">{step.description}</p>
+                </div>
+                {index < steps.length - 1 && (
+                  <div className={`w-16 h-0.5 mx-4 ${currentStep > step.id ? "bg-green-500" : "bg-gray-600"}`} />
                 )}
               </div>
             ))}
           </div>
-          <div className="text-center text-sm text-gray-400">
-            Step {currentStep} of 4 • {Math.round((currentStep / 4) * 100)}% Complete
-          </div>
         </div>
 
-        {renderStep()}
+        {/* Step Content */}
+        <div className="p-6">
+          {/* Step 1: Upload Photo */}
+          {currentStep === 1 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-white mb-2">Upload Your Photo</h3>
+                <p className="text-gray-400">Take a clear, well-lit photo for accurate analysis</p>
+              </div>
+
+              {uploadedImage ? (
+                <div className="text-center space-y-4">
+                  <div className="relative inline-block">
+                    <img
+                      src={uploadedImage || "/placeholder.svg"}
+                      alt="Uploaded"
+                      className="w-64 h-64 object-cover rounded-xl border-2 border-green-500"
+                    />
+                    <button
+                      onClick={() => setUploadedImage(null)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <p className="text-green-400 font-medium">Photo uploaded successfully!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card className="glass-effect border-gray-700 hover:border-green-500 transition-colors cursor-pointer">
+                    <CardContent className="p-6 text-center" onClick={handleCameraCapture}>
+                      <Camera className="h-12 w-12 text-green-400 mx-auto mb-4" />
+                      <h4 className="text-lg font-semibold text-white mb-2">Take Photo</h4>
+                      <p className="text-gray-400 text-sm">Use your camera to take a photo</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="glass-effect border-gray-700 hover:border-green-500 transition-colors cursor-pointer">
+                    <CardContent className="p-6 text-center" onClick={() => fileInputRef.current?.click()}>
+                      <Upload className="h-12 w-12 text-green-400 mx-auto mb-4" />
+                      <h4 className="text-lg font-semibold text-white mb-2">Upload Photo</h4>
+                      <p className="text-gray-400 text-sm">Choose from your gallery</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+            </div>
+          )}
+
+          {/* Step 2: Questions */}
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-white mb-2">Tell Us About Yourself</h3>
+                <p className="text-gray-400">Answer a few questions for personalized recommendations</p>
+              </div>
+
+              <div className="space-y-6">
+                {questions.map((q) => (
+                  <Card key={q.id} className="glass-effect border-gray-700">
+                    <CardContent className="p-6">
+                      <h4 className="text-lg font-semibold text-white mb-4">{q.question}</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {q.options.map((option) => {
+                          const isSelected = q.multiple
+                            ? (answers[q.id] || []).includes(option)
+                            : answers[q.id] === option
+
+                          return (
+                            <button
+                              key={option}
+                              onClick={() => handleAnswerChange(q.id, option, q.multiple)}
+                              className={`p-3 rounded-lg border-2 transition-all ${
+                                isSelected
+                                  ? "border-green-500 bg-green-500/20 text-green-400"
+                                  : "border-gray-600 text-gray-300 hover:border-gray-500"
+                              }`}
+                            >
+                              {option}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Analysis */}
+          {currentStep === 3 && (
+            <div className="text-center space-y-6">
+              <div className="w-24 h-24 mx-auto">
+                <div className="relative">
+                  <div className="w-24 h-24 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                  <Sparkles className="absolute inset-0 m-auto h-8 w-8 text-green-400" />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-white mb-2">Analyzing Your Skin</h3>
+                <p className="text-gray-400">Our AI is processing your photo and answers...</p>
+              </div>
+              <div className="space-y-2">
+                <div className="text-sm text-gray-500">This may take a few moments</div>
+                <div className="w-64 h-2 bg-gray-700 rounded-full mx-auto overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Results */}
+          {currentStep === 4 && analysisData && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h3 className="text-2xl font-bold text-white mb-2">Your Analysis Results</h3>
+                <p className="text-gray-400">Personalized recommendations based on AI analysis</p>
+              </div>
+
+              {/* Skin Score */}
+              <Card className="glass-effect border-gray-700">
+                <CardContent className="p-6 text-center">
+                  <div className="flex items-center justify-center space-x-4">
+                    <div className="relative w-20 h-20">
+                      <svg className="w-20 h-20 transform -rotate-90">
+                        <circle
+                          cx="40"
+                          cy="40"
+                          r="36"
+                          stroke="currentColor"
+                          strokeWidth="8"
+                          fill="none"
+                          className="text-gray-700"
+                        />
+                        <circle
+                          cx="40"
+                          cy="40"
+                          r="36"
+                          stroke="currentColor"
+                          strokeWidth="8"
+                          fill="none"
+                          strokeDasharray={`${analysisData.skinScore * 2.26} 226`}
+                          className="text-green-500"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-2xl font-bold text-white">{analysisData.skinScore}</span>
+                      </div>
+                    </div>
+                    <div className="text-left">
+                      <h4 className="text-xl font-bold text-white">Skin Health Score</h4>
+                      <p className="text-gray-400">Based on AI analysis</p>
+                      <Badge className="mt-2 bg-green-500/20 text-green-400">
+                        {analysisData.skinScore >= 80
+                          ? "Excellent"
+                          : analysisData.skinScore >= 60
+                            ? "Good"
+                            : "Needs Attention"}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recommended Products */}
+              <Card className="glass-effect border-gray-700">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center">
+                    <Award className="h-6 w-6 text-green-400 mr-2" />
+                    Recommended Products
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {analysisData.recommendations.map((product) => (
+                      <Card
+                        key={product.id}
+                        className="glass-effect border-gray-600 hover:border-green-500 transition-colors cursor-pointer"
+                        onClick={() => onProductClick && onProductClick(product)}
+                      >
+                        <CardContent className="p-4">
+                          <img
+                            src={product.image || "/placeholder.svg"}
+                            alt={product.name}
+                            className="w-full h-32 object-cover rounded-lg mb-3"
+                          />
+                          <h5 className="font-semibold text-white text-sm mb-2 line-clamp-2">{product.name}</h5>
+                          <div className="flex items-center space-x-1 mb-2">
+                            <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                            <span className="text-sm text-gray-300">{product.rating}</span>
+                          </div>
+                          <div className="flex items-center space-x-2 mb-3">
+                            <span className="text-lg font-bold text-green-400">₹{product.price}</span>
+                            <span className="text-sm text-gray-500 line-through">₹{product.originalPrice}</span>
+                          </div>
+                          <p className="text-xs text-gray-400 mb-3">{product.reason}</p>
+                          <div className="flex space-x-2">
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onAddToCart && onAddToCart(product)
+                              }}
+                              className="flex-1 bg-green-500 hover:bg-green-600 text-white text-xs py-2"
+                            >
+                              <ShoppingCart className="h-3 w-3 mr-1" />
+                              Add to Cart
+                            </Button>
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onAddToWishlist && onAddToWishlist(product)
+                              }}
+                              variant="outline"
+                              className="p-2 border-gray-600 text-gray-300 hover:text-red-400 hover:border-red-400"
+                            >
+                              <Heart className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between p-6 border-t border-gray-700">
+          <div className="flex space-x-3">
+            {currentStep > 1 && currentStep !== 3 && (
+              <Button
+                onClick={prevStep}
+                variant="outline"
+                className="border-gray-600 text-gray-300 hover:border-gray-500 bg-transparent"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Previous
+              </Button>
+            )}
+          </div>
+
+          <div className="flex space-x-3">
+            {currentStep === 4 ? (
+              <Button
+                onClick={resetAnalyzer}
+                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+              >
+                Analyze Again
+              </Button>
+            ) : (
+              currentStep !== 3 && (
+                <Button
+                  onClick={nextStep}
+                  disabled={
+                    (currentStep === 1 && !uploadedImage) || (currentStep === 2 && Object.keys(answers).length === 0)
+                  }
+                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {currentStep === 2 ? "Start Analysis" : "Next"}
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              )
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

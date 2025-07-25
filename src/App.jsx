@@ -4,240 +4,278 @@ import { useState, useEffect } from "react"
 import Header from "./components/Header"
 import HomePage from "./components/HomePage"
 import ProductsPage from "./components/ProductsPage"
-import WishlistPage from "./components/WishlistPage"
-import SignInPage from "./components/SignInPage"
-import CheckoutPage from "./components/CheckoutPage"
+import ProductDetailPage from "./components/ProductDetailPage"
 import SkinHairAnalyzer from "./components/SkinHairAnalyzer"
-import RecommendationsPage from "./components/RecommendationsPage"
-import ShoppingCartSidebar from "./components/ShoppingCartSidebar"
-import Footer from "./components/Footer"
-import NotificationToast from "./components/NotificationToast"
-import AIAssistant from "./components/AIAssistant"
-import TreeTracker from "./components/TreeTracker"
 import CommunitySection from "./components/CommunitySection"
+import AIAssistant from "./components/AIAssistant"
+import ShoppingCartSidebar from "./components/ShoppingCartSidebar"
+import WishlistPage from "./components/WishlistPage"
+import CheckoutPage from "./components/CheckoutPage"
+import SignInPage from "./components/SignInPage"
+import TreeTracker from "./components/TreeTracker"
+import NotificationToast from "./components/NotificationToast"
+import Footer from "./components/Footer"
+import { getProductById, getRelatedProducts } from "./data/products"
+import "./App.css"
 
 function App() {
   const [currentPage, setCurrentPage] = useState("home")
-  const [isCartOpen, setIsCartOpen] = useState(false)
-  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState(null)
   const [cartItems, setCartItems] = useState([])
   const [wishlistItems, setWishlistItems] = useState([])
-  const [user, setUser] = useState(null)
-  const [notifications, setNotifications] = useState([])
+  const [isCartOpen, setIsCartOpen] = useState(false)
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [notification, setNotification] = useState(null)
   const [userProfile, setUserProfile] = useState(null)
-  const [recommendations, setRecommendations] = useState([])
 
-  // Load data from localStorage
+  // Load data from localStorage on mount
   useEffect(() => {
     const savedCart = localStorage.getItem("mamaearth-cart")
     const savedWishlist = localStorage.getItem("mamaearth-wishlist")
     const savedUser = localStorage.getItem("mamaearth-user")
-    const savedProfile = localStorage.getItem("mamaearth-profile")
 
-    if (savedCart) setCartItems(JSON.parse(savedCart))
-    if (savedWishlist) setWishlistItems(JSON.parse(savedWishlist))
-    if (savedUser) setUser(JSON.parse(savedUser))
-    if (savedProfile) setUserProfile(JSON.parse(savedProfile))
-
-    // Listen for custom navigation events
-    const handleNavigateToAnalyzer = () => {
-      setCurrentPage("analyzer")
-      setIsAIAssistantOpen(false)
+    if (savedCart) {
+      try {
+        setCartItems(JSON.parse(savedCart))
+      } catch (error) {
+        console.error("Error loading cart:", error)
+      }
     }
 
-    window.addEventListener("navigate-to-analyzer", handleNavigateToAnalyzer)
-    return () => window.removeEventListener("navigate-to-analyzer", handleNavigateToAnalyzer)
+    if (savedWishlist) {
+      try {
+        setWishlistItems(JSON.parse(savedWishlist))
+      } catch (error) {
+        console.error("Error loading wishlist:", error)
+      }
+    }
+
+    if (savedUser) {
+      try {
+        setUserProfile(JSON.parse(savedUser))
+      } catch (error) {
+        console.error("Error loading user:", error)
+      }
+    }
   }, [])
 
-  // Save to localStorage
+  // Save to localStorage whenever cart changes
   useEffect(() => {
     localStorage.setItem("mamaearth-cart", JSON.stringify(cartItems))
   }, [cartItems])
 
+  // Save to localStorage whenever wishlist changes
   useEffect(() => {
     localStorage.setItem("mamaearth-wishlist", JSON.stringify(wishlistItems))
   }, [wishlistItems])
 
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem("mamaearth-user", JSON.stringify(user))
-    } else {
-      localStorage.removeItem("mamaearth-user")
-    }
-  }, [user])
-
+  // Save to localStorage whenever user profile changes
   useEffect(() => {
     if (userProfile) {
-      localStorage.setItem("mamaearth-profile", JSON.stringify(userProfile))
+      localStorage.setItem("mamaearth-user", JSON.stringify(userProfile))
+    } else {
+      localStorage.removeItem("mamaearth-user")
     }
   }, [userProfile])
 
   const showNotification = (message, type = "success") => {
-    const id = Date.now()
-    const notification = { id, message, type }
-    setNotifications((prev) => [...prev, notification])
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id))
-    }, 3000)
+    setNotification({ message, type })
+    setTimeout(() => setNotification(null), 3000)
   }
 
-  const addToCart = (product, quantity = 1) => {
-    setCartItems((prev) => {
-      const existing = prev.find((item) => item.id === product.id)
-      if (existing) {
-        showNotification(`Updated ${product.name} quantity in cart`)
-        return prev.map((item) => (item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item))
-      } else {
-        showNotification(`${product.name} added to cart`)
-        return [...prev, { ...product, quantity }]
-      }
-    })
-
-    // Update user's tree count
-    if (user) {
-      setUser((prev) => ({
-        ...prev,
-        treesPlanted: (prev.treesPlanted || 0) + 1,
-      }))
+  const handleNavigation = (page, productId = null) => {
+    if (page === "product-detail" && productId) {
+      const product = getProductById(productId)
+      setSelectedProduct(product)
     }
-  }
-
-  const removeFromCart = (productId) => {
-    const product = cartItems.find((item) => item.id === productId)
-    setCartItems((prev) => prev.filter((item) => item.id !== productId))
-    if (product) {
-      showNotification(`${product.name} removed from cart`, "info")
-    }
-  }
-
-  const updateCartQuantity = (productId, quantity) => {
-    if (quantity <= 0) {
-      removeFromCart(productId)
-      return
-    }
-    setCartItems((prev) => prev.map((item) => (item.id === productId ? { ...item, quantity } : item)))
-  }
-
-  const addToWishlist = (product) => {
-    setWishlistItems((prev) => {
-      const exists = prev.find((item) => item.id === product.id)
-      if (exists) {
-        showNotification(`${product.name} removed from wishlist`, "info")
-        return prev.filter((item) => item.id !== product.id)
-      } else {
-        showNotification(`${product.name} added to wishlist`)
-        return [...prev, product]
-      }
-    })
-  }
-
-  const removeFromWishlist = (productId) => {
-    const product = wishlistItems.find((item) => item.id === productId)
-    setWishlistItems((prev) => prev.filter((item) => item.id !== productId))
-    if (product) {
-      showNotification(`${product.name} removed from wishlist`, "info")
-    }
-  }
-
-  const getCartTotal = () => {
-    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
-  }
-
-  const getCartItemsCount = () => {
-    return cartItems.reduce((total, item) => total + item.quantity, 0)
-  }
-
-  const handleProductRecommend = (products) => {
-    setCurrentPage("products")
-    setSearchQuery(products[0] || "")
+    setCurrentPage(page)
+    setIsCartOpen(false)
     setIsAIAssistantOpen(false)
   }
 
-  const renderPage = () => {
+  const handleProductClick = (product) => {
+    setSelectedProduct(product)
+    setCurrentPage("product-detail")
+  }
+
+  const handleAddToCart = (product, variant = null, quantity = 1) => {
+    const existingItem = cartItems.find((item) => item.id === product.id && item.variant === variant)
+
+    if (existingItem) {
+      setCartItems(
+        cartItems.map((item) =>
+          item.id === product.id && item.variant === variant ? { ...item, quantity: item.quantity + quantity } : item,
+        ),
+      )
+      showNotification(`Updated ${product.name} quantity in cart!`)
+    } else {
+      const cartItem = {
+        ...product,
+        variant,
+        quantity,
+        cartId: Date.now() + Math.random(),
+      }
+      setCartItems([...cartItems, cartItem])
+      showNotification(`${product.name} added to cart!`)
+    }
+  }
+
+  const handleRemoveFromCart = (cartId) => {
+    const item = cartItems.find((item) => item.cartId === cartId)
+    setCartItems(cartItems.filter((item) => item.cartId !== cartId))
+    if (item) {
+      showNotification(`${item.name} removed from cart!`, "info")
+    }
+  }
+
+  const handleUpdateCartQuantity = (cartId, newQuantity) => {
+    if (newQuantity <= 0) {
+      handleRemoveFromCart(cartId)
+      return
+    }
+
+    setCartItems(cartItems.map((item) => (item.cartId === cartId ? { ...item, quantity: newQuantity } : item)))
+  }
+
+  const handleAddToWishlist = (product) => {
+    const isAlreadyInWishlist = wishlistItems.some((item) => item.id === product.id)
+
+    if (isAlreadyInWishlist) {
+      setWishlistItems(wishlistItems.filter((item) => item.id !== product.id))
+      showNotification(`${product.name} removed from wishlist!`, "info")
+    } else {
+      setWishlistItems([...wishlistItems, { ...product, wishlistId: Date.now() + Math.random() }])
+      showNotification(`${product.name} added to wishlist!`)
+    }
+  }
+
+  const handleRemoveFromWishlist = (productId) => {
+    const item = wishlistItems.find((item) => item.id === productId)
+    setWishlistItems(wishlistItems.filter((item) => item.id !== productId))
+    if (item) {
+      showNotification(`${item.name} removed from wishlist!`, "info")
+    }
+  }
+
+  const handleSearch = (query) => {
+    setSearchQuery(query)
+    setCurrentPage("products")
+  }
+
+  const handleClearCart = () => {
+    setCartItems([])
+    showNotification("Cart cleared!", "info")
+  }
+
+  const handleCheckout = (orderData) => {
+    // Simulate order processing
+    console.log("Processing order:", orderData)
+    setCartItems([])
+    showNotification("Order placed successfully! 🎉")
+    setCurrentPage("home")
+  }
+
+  const handleSignIn = (userData) => {
+    setUserProfile(userData)
+    showNotification(`Welcome back, ${userData.name}!`)
+    setCurrentPage("home")
+  }
+
+  const handleSignOut = () => {
+    setUserProfile(null)
+    showNotification("Signed out successfully!", "info")
+    setCurrentPage("home")
+  }
+
+  const cartItemsCount = cartItems.reduce((total, item) => total + item.quantity, 0)
+  const wishlistItemsCount = wishlistItems.length
+
+  const relatedProducts = selectedProduct ? getRelatedProducts(selectedProduct.id, selectedProduct.category) : []
+
+  const renderCurrentPage = () => {
     switch (currentPage) {
       case "home":
         return (
           <HomePage
-            onNavigate={setCurrentPage}
-            addToCart={addToCart}
-            addToWishlist={addToWishlist}
+            onProductClick={handleProductClick}
+            onAddToCart={handleAddToCart}
+            onAddToWishlist={handleAddToWishlist}
+            onNavigate={handleNavigation}
             wishlistItems={wishlistItems}
           />
         )
+
       case "products":
         return (
           <ProductsPage
-            onAddToCart={addToCart}
-            onAddToWishlist={addToWishlist}
+            onAddToCart={handleAddToCart}
+            onAddToWishlist={handleAddToWishlist}
+            onProductClick={handleProductClick}
             wishlistItems={wishlistItems}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
           />
         )
+
+      case "product-detail":
+        return (
+          <ProductDetailPage
+            product={selectedProduct}
+            onAddToCart={handleAddToCart}
+            onAddToWishlist={handleAddToWishlist}
+            onBack={() => setCurrentPage("products")}
+            relatedProducts={relatedProducts}
+          />
+        )
+
+      case "analyzer":
+        return <SkinHairAnalyzer onAddToCart={handleAddToCart} onProductClick={handleProductClick} />
+
+      case "community":
+        return <CommunitySection />
+
+      case "tree-tracker":
+        return <TreeTracker />
+
       case "wishlist":
         return (
-          <WishlistPage wishlistItems={wishlistItems} removeFromWishlist={removeFromWishlist} addToCart={addToCart} />
+          <WishlistPage
+            wishlistItems={wishlistItems}
+            onRemoveFromWishlist={handleRemoveFromWishlist}
+            onAddToCart={handleAddToCart}
+            onProductClick={handleProductClick}
+            onBack={() => setCurrentPage("home")}
+          />
         )
-      case "signin":
-        return <SignInPage onNavigate={setCurrentPage} setUser={setUser} />
+
       case "checkout":
         return (
           <CheckoutPage
             cartItems={cartItems}
-            onNavigate={setCurrentPage}
-            user={user}
-            total={getCartTotal()}
-            clearCart={() => setCartItems([])}
-          />
-        )
-      case "analyzer":
-        return (
-          <SkinHairAnalyzer
-            onNavigate={setCurrentPage}
-            setUserProfile={setUserProfile}
-            showNotification={showNotification}
-            setRecommendations={setRecommendations}
-          />
-        )
-      case "recommendations":
-        return (
-          <RecommendationsPage
-            onNavigate={setCurrentPage}
-            addToCart={addToCart}
-            addToWishlist={addToWishlist}
+            onCheckout={handleCheckout}
+            onBack={() => setCurrentPage("home")}
             userProfile={userProfile}
-            wishlistItems={wishlistItems}
-            recommendations={recommendations}
           />
         )
-      case "community":
+
+      case "signin":
         return (
-          <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 pt-20 pb-8">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-              <CommunitySection />
-            </div>
-          </div>
+          <SignInPage
+            onSignIn={handleSignIn}
+            onBack={() => setCurrentPage("home")}
+            userProfile={userProfile}
+            onSignOut={handleSignOut}
+          />
         )
-      case "impact":
-        return (
-          <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 pt-20 pb-8">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold text-white mb-4">Your Environmental Impact</h1>
-                <p className="text-xl text-gray-400">See how you're making a difference with every purchase</p>
-              </div>
-              <TreeTracker user={user} />
-            </div>
-          </div>
-        )
+
       default:
         return (
           <HomePage
-            onNavigate={setCurrentPage}
-            addToCart={addToCart}
-            addToWishlist={addToWishlist}
+            onProductClick={handleProductClick}
+            onAddToCart={handleAddToCart}
+            onAddToWishlist={handleAddToWishlist}
+            onNavigate={handleNavigation}
             wishlistItems={wishlistItems}
           />
         )
@@ -245,53 +283,54 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-hero-pattern">
-      {/* Floating particles background */}
-      <div className="floating-particles">
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-      </div>
-
+    <div className="min-h-screen bg-gray-900">
       <Header
-        onNavigate={setCurrentPage}
-        cartItemsCount={getCartItemsCount()}
-        wishlistCount={wishlistItems.length}
+        cartItemsCount={cartItemsCount}
+        wishlistItemsCount={wishlistItemsCount}
         onCartClick={() => setIsCartOpen(true)}
-        user={user}
-        onLogout={() => setUser(null)}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
+        onWishlistClick={() => handleNavigation("wishlist")}
+        onNavigate={handleNavigation}
+        onSearch={handleSearch}
+        onAIAssistantToggle={() => setIsAIAssistantOpen(!isAIAssistantOpen)}
         currentPage={currentPage}
-        onAIAssistantOpen={() => setIsAIAssistantOpen(true)}
+        userProfile={userProfile}
       />
 
-      <main className="relative z-10">{renderPage()}</main>
+      <main className="pt-16">{renderCurrentPage()}</main>
 
-      <Footer onNavigate={setCurrentPage} />
+      <Footer onNavigate={handleNavigation} />
 
+      {/* Shopping Cart Sidebar */}
       <ShoppingCartSidebar
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         cartItems={cartItems}
-        onUpdateQuantity={updateCartQuantity}
-        onRemoveFromCart={removeFromCart}
-        setCurrentPage={setCurrentPage}
+        onRemoveItem={handleRemoveFromCart}
+        onUpdateQuantity={handleUpdateCartQuantity}
+        onClearCart={handleClearCart}
+        onCheckout={() => {
+          setIsCartOpen(false)
+          handleNavigation("checkout")
+        }}
       />
 
+      {/* AI Assistant */}
       <AIAssistant
         isOpen={isAIAssistantOpen}
         onClose={() => setIsAIAssistantOpen(false)}
-        onProductRecommend={handleProductRecommend}
+        onNavigate={handleNavigation}
+        onAddToCart={handleAddToCart}
+        onProductClick={handleProductClick}
       />
 
-      {/* Notifications */}
-      <div className="fixed top-4 right-4 z-50 space-y-2">
-        {notifications.map((notification) => (
-          <NotificationToast key={notification.id} message={notification.message} type={notification.type} />
-        ))}
-      </div>
+      {/* Notification Toast */}
+      {notification && (
+        <NotificationToast
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
     </div>
   )
 }

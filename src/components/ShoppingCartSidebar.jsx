@@ -7,24 +7,20 @@ const ShoppingCartSidebar = ({
   isOpen,
   onClose,
   cartItems = [],
-  onUpdateQuantity = () => {},
-  onRemoveFromCart = () => {},
-  setCurrentPage = () => {},
+  onUpdateQuantity,
+  onRemoveItem,
+  onClearCart,
+  onCheckout,
 }) => {
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const shipping = subtotal > 399 ? 0 : 50
   const total = subtotal + shipping
 
-  const handleCheckout = () => {
-    setCurrentPage("checkout")
-    onClose()
-  }
-
-  const handleUpdateQuantity = (productId, newQuantity) => {
+  const handleUpdateQuantity = (cartId, newQuantity) => {
     if (newQuantity <= 0) {
-      onRemoveFromCart(productId)
+      onRemoveItem(cartId)
     } else {
-      onUpdateQuantity(productId, newQuantity)
+      onUpdateQuantity(cartId, newQuantity)
     }
   }
 
@@ -69,7 +65,7 @@ const ShoppingCartSidebar = ({
               <div className="space-y-4">
                 {cartItems.map((item) => (
                   <div
-                    key={item.id}
+                    key={item.cartId}
                     className="flex items-center space-x-4 p-4 glass-effect rounded-lg border border-gray-700"
                   >
                     <img
@@ -80,10 +76,11 @@ const ShoppingCartSidebar = ({
                     <div className="flex-1">
                       <h4 className="font-medium text-white line-clamp-2">{item.name}</h4>
                       <p className="text-sm text-gray-400">₹{item.price}</p>
+                      {item.variant && <p className="text-xs text-gray-500">{item.variant}</p>}
 
                       <div className="flex items-center space-x-2 mt-2">
                         <button
-                          onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => handleUpdateQuantity(item.cartId, item.quantity - 1)}
                           className="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors"
                         >
                           <Minus className="h-4 w-4" />
@@ -92,13 +89,13 @@ const ShoppingCartSidebar = ({
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => handleUpdateQuantity(item.cartId, item.quantity + 1)}
                           className="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors"
                         >
                           <Plus className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => onRemoveFromCart(item.id)}
+                          onClick={() => onRemoveItem(item.cartId)}
                           className="p-1 hover:bg-red-900/20 text-red-400 hover:text-red-300 rounded ml-2 transition-colors"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -132,9 +129,18 @@ const ShoppingCartSidebar = ({
                 </div>
               </div>
 
-              <Button onClick={handleCheckout} className="w-full bg-green-600 hover:bg-green-700 text-white">
-                Proceed to Checkout
-              </Button>
+              <div className="space-y-2">
+                <Button onClick={onCheckout} className="w-full bg-green-600 hover:bg-green-700 text-white">
+                  Proceed to Checkout
+                </Button>
+                <Button
+                  onClick={onClearCart}
+                  variant="outline"
+                  className="w-full border-gray-600 text-gray-300 hover:bg-gray-800 bg-transparent"
+                >
+                  Clear Cart
+                </Button>
+              </div>
             </div>
           )}
         </div>
